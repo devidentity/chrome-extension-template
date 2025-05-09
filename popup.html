@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scarlet Swap</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <h1><span class="h1-scarlet">Scarlet</span> <span class="h1-swap">Swap</span></h1>
+
+        <div class="setting-item toggle-container">
+            <label for="enabled-toggle">Enable Extension:</label>
+            <label class="switch" title="Enable or disable all replacements">
+                <input type="checkbox" id="enabled-toggle">
+                <span class="slider round"></span>
+            </label>
+        </div>
+        <hr>
+        <div class="options-link-section">
+            <button id="open-options-btn" class="action-btn options-btn">Manage Rules & Settings</button>
+            <p class="description">Configure rules, unlock features, and more.</p>
+        </div>
+
+        <div class="share-section">
+             <button id="share-btn" class="action-btn share-btn">Copy Share Link</button>
+             <p id="share-status" class="status" aria-live="polite"></p>
+        </div>
+
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

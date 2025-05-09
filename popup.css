@@ -1,0 +1,54 @@
+/* Styles for popup.html (Styled Heading) */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    width: 300px; padding: 10px; background-color: #f4f7f9; font-size: 14px; color: #333333; /* Updated default text color */
+}
+.container { background-color: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+h1, h2 { text-align: center; color: #222; margin-top: 0; margin-bottom: 15px; font-weight: 600; }
+/* --- Added Styles for H1 Spans --- */
+h1 {
+    font-size: 1.4em; /* Adjusted size for popup */
+}
+h1 .h1-scarlet {
+    color: #BB0000; /* Main Red */
+}
+h1 .h1-swap {
+    color: #666666; /* Main Gray */
+}
+/* --- End Added Styles --- */
+
+h2 { font-size: 1.1em; margin-top: 15px; padding-bottom: 5px; border-bottom: 1px solid #eeeeee; }
+hr { border: none; border-top: 1px solid #e0e0e0; margin: 20px 0; } /* Kept consistent HR color */
+.setting-item { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+label { margin-right: 10px; color: #444444; font-weight: 500; display: block; margin-bottom: 5px; font-size: 0.95em; }
+.toggle-container label:first-child { display: inline-flex; align-items: center; font-weight: normal; margin-bottom: 0; }
+input[type="text"] { width: 100%; padding: 9px 12px; margin-bottom: 8px; border: 1px solid #cccccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95em; background-color: #ffffff; transition: border-color 0.2s ease, box-shadow 0.2s ease; } /* Updated border/bg */
+input[type="text"]:focus { border-color: #2196F3; box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2); outline: none; }
+.toggle-container { justify-content: flex-start; }
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; margin-left: auto; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cccccc; transition: .4s; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
+input:checked + .slider { background-color: #BB0000; }
+input:checked + .slider:before { transform: translateX(20px); }
+.slider.round { border-radius: 24px; }
+.slider.round:before { border-radius: 50%; }
+.action-btn { padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95em; font-weight: 500; transition: background-color 0.2s ease, box-shadow 0.2s ease; text-align: center; width: 100%; margin-top: 5px; }
+.action-btn:hover:not(:disabled) { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+/* Removed unused .upgrade-btn and #activate-license-btn styles */
+/* Options Button (Primary) */
+.options-btn { background-color: #BB0000; color: white; margin-top: 10px; } /* Kept styles */
+.options-btn:hover { background-color: #e06666; } /* Kept hover */
+/* Share Button (Neutral) */
+.share-btn { background-color: #666666; color: white; margin-top: 15px; } /* Kept styles */
+.share-btn:hover:not(:disabled) { background-color: #888888; } /* Kept hover */
+
+.status { text-align: center; margin-top: 10px; font-size: 0.9em; min-height: 1.2em; font-weight: 500; }
+/* Removed unused .status-box styles */
+.description { font-size: 0.85em; color: #666666; margin-top: 4px; margin-bottom: 10px; line-height: 1.4; text-align: center; } /* Updated color */
+.visually-hidden { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+input[disabled], button[disabled] { opacity: 0.5; cursor: not-allowed !important; pointer-events: none; }
+input[disabled] { background-color: #f0f0f0; }
+input[disabled]:hover { border-color: #cccccc; }
+button[disabled]:hover { background-color: initial; box-shadow: none; }
+

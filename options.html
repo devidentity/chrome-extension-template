@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scarlet Swap Settings</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <h1><span class="h1-scarlet">Scarlet</span> <span class="h1-swap">Swap</span> Settings</h1>
+
+        <div class="top-button-group">
+             <button id="feedback-btn" class="action-btn feedback-btn" title="Provide feedback">Give Feedback</button>
+             <button id="share-btn" class="action-btn share-btn" title="Share this extension with others">Spread the Word!</button>
+        </div>
+        <p id="share-status" class="status" aria-live="polite"></p>
+
+        <h2 id="rules-heading">Replacement Rules</h2>
+
+        <div class="bundle-management setting-item">
+            <label for="bundle-selector">Active Rule Bundle:</label>
+            <select id="bundle-selector" title="Select the rule bundle to view and edit">
+                </select>
+            <div class="bundle-actions">
+                <button id="copy-bundle-btn" class="action-btn bundle-action-btn premium-control" title="Create a new editable bundle by copying the currently selected one (Unlockable feature)" style="display: none;">Copy</button>
+                <button id="delete-bundle-btn" class="action-btn bundle-action-btn remove-rule-btn premium-control" title="Delete the current bundle (cannot delete primary default)" style="display: none;">Delete</button>
+                <button id="rename-bundle-btn" class="action-btn bundle-action-btn premium-control" title="Rename the current custom bundle (Unlockable feature)" style="display: none;">Rename</button>
+            </div>
+        </div>
+        <p class="description">Define your text replacement rules below for the selected bundle. Only rules in copied or imported bundles (marked as 'Custom') can be edited, added, or removed. Reordering rules also requires a custom bundle. <a href="https://devidentity.github.io/scarlet-swap/USER_MANUAL" target="_blank" rel="noopener noreferrer" title="Open the user manual in a new tab">View User Manual</a>.</p>
+        <div id="rules-list" class="rules-list-container">
+            <div class="drop-indicator" style="display: none;"></div>
+            <details class="rule-item rule-item-template" style="display: none;">
+                <summary class="rule-summary">
+                    <span class="drag-handle" title="Drag to reorder rule (Unlockable feature, custom bundles only)">⠿</span>
+                    <span class="rule-display-description">Rule Description</span>
+                    <span class="disabled-indicator" style="display: none;" title="Rule is disabled">(Disabled)</span>
+                    <span class="rule-display-find-replace">m -> x</span>
+                </summary>
+                <div class="rule-details">
+                     <div class="setting-item toggle-container rule-enable-toggle-container">
+                         <label for="rule-enabled-toggle-{id}">Enable this Rule:</label>
+                         <label class="switch rule-enable-toggle-control" title="Enable or disable this specific rule">
+                             <input type="checkbox" class="rule-enabled-toggle" id="rule-enabled-toggle-{id}">
+                             <span class="slider round"></span>
+                         </label>
+                     </div>
+                     <hr class="rule-hr">
+                     <div class="rule-inputs">
+                        <label for="description-input-{id}">Description:</label>
+                        <input type="text" class="description-input" id="description-input-{id}" placeholder="Rule name or description" title="Optional name or description for this rule (Editable in custom bundles)">
+                        <label for="find-input-{id}">Find Text:</label>
+                        <input type="text" class="find-input" id="find-input-{id}" placeholder="Text or pattern to find" title="Text or pattern to find (Editable in custom bundles)">
+                        <div class="rule-options premium-controls">
+                            <label title="Use Regular Expressions (Unlockable feature)" class="premium-control"><input type="checkbox" class="regex-toggle premium-control"> RegEx</label>
+                            <label title="Match Case Sensitivity (Unlockable feature)" class="premium-control"><input type="checkbox" class="case-toggle premium-control"> Match Case</label>
+                            <label title="Match Whole Word Only (Unlockable feature)" class="premium-control"><input type="checkbox" class="whole-word-toggle premium-control"> Whole Word</label>
+                        </div>
+                        <label for="replace-input-{id}">Replace With:</label>
+                        <input type="text" class="replace-input" id="replace-input-{id}" placeholder="Replacement text" title="Text to replace the found text with (Editable in custom bundles)">
+                        <label for="css-input-{id}" class="premium-control">CSS Styles:</label>
+                        <textarea class="css-input premium-control" id="css-input-{id}" placeholder="e.g., color: blue;" rows="2" title="Apply custom CSS styles (Unlockable feature, custom bundles only)" aria-describedby="css-input-desc"></textarea>
+                     </div>
+                     <div class="per-rule-domain-filter premium-controls">
+                          <label for="rule-domain-filter-type-{id}" class="premium-control">Rule Domain Filter:</label>
+                         <select class="rule-domain-filter-type premium-control" id="rule-domain-filter-type-{id}" title="Set domain filter for this specific rule (Unlockable feature, custom bundles only)" aria-describedby="rule-domain-filter-desc-{id}">
+                             <option value="inherit">Inherit Global Setting</option>
+                             <option value="whitelist">Allowlist (Run Only On Listed)</option>
+                             <option value="blacklist">Blocklist (Do Not Run On Listed)</option>
+                         </select>
+                         <div class="rule-domain-list-container hidden">
+                            <label for="rule-domain-list-input-{id}" class="premium-control">Rule Domains (one per line):</label>
+                            <textarea class="rule-domain-list-input premium-control" id="rule-domain-list-input-{id}" rows="2" placeholder="e.g., yahoo.com&#10;/.*\.google\.com/" title="Enter domains/RegEx for this rule only (Unlockable feature, custom bundles only)" aria-describedby="rule-domain-list-desc-{id}"></textarea>
+                         </div>
+                     </div>
+                     <button class="remove-rule-btn premium-control" title="Remove this rule (Unlockable feature, custom bundles only)">Remove Rule</button>
+                </div>
+            </details>
+            </div>
+        <button id="add-rule-btn" class="action-btn premium-control" title="Add a new replacement rule to the active custom bundle (Unlockable feature)">Add New Rule</button>
+        <hr>
+        <div id="license-status-message" class="status-box"></div>
+
+        <div id="premium-features-area">
+             <h2 id="premium-features-heading">Unlockable Features</h2>
+             <div id="license-form" style="display: none;">
+                <div class="unlock-form-inline">
+                    <label for="license-key-input">Unlock Code:</label>
+                    <input type="text" id="license-key-input" placeholder="↑ Give feedback for code ↑" aria-describedby="license-key-desc" title="Enter the code after providing feedback (above)">
+                    <button id="activate-license-btn" class="action-btn" title="Unlock premium features with the entered code">Unlock Features</button>
+                </div>
+                 <p id="license-key-desc" class="description visually-hidden">Enter the code provided to unlock additional features.</p>
+                <p id="activation-status" class="status" aria-live="polite"></p>
+             </div>
+
+             <h2 class="premium-h2">Global Domain Filtering</h2>
+             <div class="premium-section" id="global-domain-filter-section">
+                 <div class="setting-item">
+                     <label for="global-domain-filter-type" class="premium-control">Global Filter Mode:</label>
+                     <select id="global-domain-filter-type" class="premium-control" title="Choose the global filter mode: Disabled (runs everywhere), Allowlist (runs only on listed domains), Blocklist (runs everywhere except listed domains) (Unlockable feature)" aria-describedby="global-domain-filter-desc">
+                         <option value="disabled">Disabled</option>
+                         <option value="whitelist">Allowlist (Run Only On Listed)</option>
+                         <option value="blacklist">Blocklist (Do Not Run On Listed)</option>
+                     </select>
+                 </div>
+                 <label for="global-domain-list-input" class="premium-control">Global Domains (one per line):</label>
+                 <textarea id="global-domain-list-input" class="premium-control" rows="3" placeholder="e.g., yahoo.com&#10;/.*\.google\.com/" title="Enter domains (e.g., example.com) or RegEx patterns (e.g., /.*\\.google\\.com/) for the global filter, one per line (Unlockable feature)" aria-describedby="global-domain-list-desc"></textarea>
+             </div>
+
+             <h2 class="premium-h2">Manage Rule Bundles (Import/Export)</h2>
+             <p class="description import-warning">
+                 Export saves the currently active bundle or all bundles. Importing allows creating new custom bundles from file(s). Use 'Export All Bundles' first to create a backup if needed.
+             </p>
+             <div class="premium-section" id="import-export-section">
+                <div class="button-group">
+                    <button id="import-bundles-btn" class="action-btn premium-control" title="Import bundle(s) from JSON file(s) into new custom bundles (Unlockable feature)">Import Bundle(s)</button>
+                    <button id="export-active-bundle-btn" class="action-btn premium-control" title="Export the currently active bundle to a JSON file (Unlockable feature)">Export Active Bundle</button>
+                    <button id="export-all-btn" class="action-btn premium-control" title="Export all rule bundles to a single JSON file (Unlockable feature)">Export All Bundles</button>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;" multiple>
+                </div>
+             </div>
+        </div>
+        <footer class="attribution-footer">
+            <p>
+                Background: "Michigan vs. Ohio State..." by
+                <a href="https://www.flickr.com/photos/maizenbluenation/" target="_blank" rel="noopener noreferrer">Maize & Blue Nation, Zoey Holmstrom</a> via
+                <a href="https://www.flickr.com/photos/maizenbluenation/52527222879/" target="_blank" rel="noopener noreferrer">Flickr</a> /
+                <a href="https://creativecommons.org/licenses/by/2.0/" target="_blank" rel="noopener noreferrer">CC BY 2.0</a>.
+            </p>
+            <p>
+                XKCD substitution rules based on comics by
+                <a href="https://xkcd.com/" target="_blank" rel="noopener noreferrer">Randall Munroe</a>, licensed under
+                <a href="https://creativecommons.org/licenses/by-nc/2.5/" target="_blank" rel="noopener noreferrer">CC BY-NC 2.5</a>.
+            </p>
+        </footer>
+
+    </div>
+    <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "Scarlet Swap",
+  "version": "0.9.1",
+    "description": "Auto text replacer. Use Buckeye/xkcd/other bundles or create custom rules. Perfect for Buckeye fans & others!",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "offscreen",
+    "alarms"
+  ],
+  "icons": {
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icons/icon-48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "offscreen": {
+    "pages": [
+      "offscreen.html"
+    ],
+    "reasons": [
+      "BLOBS"
+    ],
+    "justification": "Needed to run Sentry SDK and send GA4 events from the service worker."
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';",
+    "worker-src": "'self'"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html",
+  "host_permissions": [
+     "<all_urls>"
+   ],
+   "web_accessible_resources": [
+    {
+      "resources": [
+        "bundles/*.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ],
+      "use_dynamic_url": false
+    }
+  ]
+}
