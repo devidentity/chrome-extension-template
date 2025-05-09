@@ -1,72 +1,30 @@
-# Scarlet Swap  Buckeye Text Replacer 🏈
+# Chrome Extension Template 🧩
 
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/glcojplfgdgjboobhadopanojgfjpehj?label=Chrome%20Web%20Store&color=scarlet&style=for-the-badge)](https://chrome.google.com/webstore/detail/glcojplfgdgjboobhadopanojgfjpehj)
 [![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey?style=for-the-badge)](LICENSE)
-**Show your Buckeye pride! Scarlet Swap automatically replaces text on web pages based on your custom rules, perfect for transforming rival mentions or any text you want!**
+
+This is a basic template for creating Chrome Extensions. It includes pre-configured integrations for:
+
+*   **Sentry.io:** For error tracking and performance monitoring.
+*   **Google Analytics 4 (GA4):** For collecting basic usage analytics, including page views for the popup and options pages, and an example of alarm-triggered event collection.
+
+The template also provides a basic popup and options page structure, and a generalized privacy policy.
 
 ---
 
 ## Features
 
-Scarlet Swap offers both free and premium features to customize your browsing experience.
-
-**Core Features (Free):**
-
-* **Default Rules:** Comes pre-loaded with essential rules for Buckeye fans (e.g., replacing "Michigan" with "TTUN").
-* **Basic Rule Editing:** Modify the 'Find', 'Replace', and 'Description' fields of the default rules.
-* **Enable/Disable Rules:** Easily toggle individual default rules on or off via the Options page.
-* **Global Toggle:** Quickly enable or disable all replacements using the extension popup.
-* **Themed Interface:** A clean UI with Buckeye colors.
-
-**Premium Features (Unlockable):**
-
-* ✨ **Add Custom Rules:** Create unlimited new text replacement rules.
-* 🗑️ **Remove Rules:** Delete custom rules you no longer need.
-* ↕️ **Reorder Rules:** Drag and drop rules to control the order replacements happen (useful for overlapping rules).
-* ⚙️ **Advanced Matching:**
-    * Use **Regular Expressions (RegEx)** for powerful pattern matching.
-    * Control **Case Sensitivity**.
-    * Match **Whole Words** only.
-* 🎨 **Custom Styling:** Apply custom CSS styles (like color, bolding) to your replaced text.
-* 🌐 **Domain Filtering:**
-    * **Per-Rule Filters:** Make rules run only on specific websites (Allowlist) or exclude specific websites (Blocklist).
-    * **Global Filters:** Set default Allow/Block lists that apply to all rules inheriting the global setting.
-* 💾 **Import/Export:** Back up your rules to a JSON file or import rules shared by others.
+*   **Sentry.io Integration:** Error tracking and performance monitoring are set up.
+*   **GA4 Integration:** Basic usage analytics, page view tracking for popup and options, and an example alarm-triggered event.
+*   **Basic Popup:** Includes a link to the Options page.
+*   **Basic Options Page:** A placeholder page to build upon.
+*   **Generalized Privacy Policy:** Includes language for Sentry and GA4 usage.
+*   **Basic Licensing Logic:** A simple framework is included for potential free/premium features.
 
 ---
 
 ## Installation
 
-1.  **Chrome Web Store (Recommended):**
-    * Install Scarlet Swap directly from the [Chrome Web Store](https://chrome.google.com/webstore/detail/glcojplfgdgjboobhadopanojgfjpehj) (Link coming soon!)
-
-2.  **Manual Installation (for Development):**
-    * Clone this repository: `git clone https://github.com/YOUR_USERNAME/scarlet-swap.git`
-    * Open Chrome and navigate to `chrome://extensions`.
-    * Enable "Developer mode" using the toggle switch in the top-right corner.
-    * Click the "Load unpacked" button.
-    * Select the directory where you cloned the repository.
-
----
-
-## How to Use
-
-1.  **Toggle Extension:** Click the Scarlet Swap icon in your Chrome toolbar to open the popup. Use the main toggle to quickly enable or disable all replacements.
-2.  **Manage Rules:** Click "Manage Rules & Settings" in the popup to open the Options page.
-3.  **View/Edit Default Rules:** On the Options page, click on a rule summary (like "Beat TTUN") to expand its details. You can edit the "Find Text", "Replace With", and "Description" fields for default rules for free. Use the toggle within the rule details to enable/disable it.
-4.  **Unlock Premium:** Enter your unlock code (obtained separately - see below) in the "Unlockable Features" section on the Options page and click "Unlock Features".
-5.  **Add/Manage Premium Rules:** Once unlocked, use the "Add New Rule" button, drag handles, remove buttons, advanced checkboxes, CSS input, and domain filters as needed.
-6.  **Import/Export (Premium):** Use the buttons in the "Manage Rules (Import/Export)" section. Remember that importing *replaces* all current rules.
-
----
-
-## Premium Features Activation
-
-Premium features require an unlock code.
-
-* **Getting a Code:** *(TODO: Explain how users obtain a code - e.g., link to a purchase page, Patreon, etc.)*
-* **Activation:** Once you have a code, enter it in the "Unlock Code" field on the Options page and click "Unlock Features".
-* **Development/Testing:** You can use the code `03-MAY-2025` to unlock premium features for local testing purposes.
+To use this template, you will typically clone the repository and load it as an unpacked extension in Chrome for development and testing.
 
 ---
 
@@ -83,6 +41,33 @@ Premium features require an unlock code.
     * `offscreen.html/.js`: Handles Sentry error reporting and GA4 event sending via the Offscreen API.
 * Sentry.io is used for error tracking (DSN configured in `offscreen.js`).
 * Google Analytics (GA4) is used for basic usage analytics (Measurement ID & API Secret configured in `offscreen.js`).
+* Basic licensing logic is included (see relevant files).
+
+---
+
+## Customizing the Template (Placeholders)
+
+This template uses placeholders in the format `{{PLACEHOLDER}}` that you will need to replace with your specific information.
+
+*   **Extension Name and Description:**
+    *   In `manifest.json`, replace `Chrome Extension Template` and `A template for building Chrome extensions with Sentry and GA4 integrations.` with your extension's name and a brief description.
+*   **Sentry.io DSN:**
+    *   In `offscreen.js` (and potentially other files where Sentry is initialized), replace `your_sentry_dsn_here` with your Sentry DSN. You can find this in your Sentry project settings.
+*   **GA4 Measurement ID:**
+    *   In `offscreen.js` (and potentially other files where GA4 is initialized), replace `your_ga4_measurement_id_here` with your GA4 Measurement ID. You can find this in your Google Analytics 4 property settings.
+*   **Developer/Company Information:**
+    *   In `PRIVACY_POLICY.md`, replace `Example Company`, `Developer Name`, and `developer@example.com` with your relevant details.
+*   **Licensing Logic:**
+    *   Modify the licensing logic placeholders (if any remain) and implement your specific premium feature unlock mechanism.
+
+Remember to search for all instances of `{{` to ensure you find and replace all placeholders.
+
+---
+
+## Testing Locally
+
+1.  **Clone the Repository:** If you haven't already, clone this repository to your local machine.
+
 
 ---
 

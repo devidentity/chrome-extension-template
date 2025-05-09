@@ -1,14 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Scarlet Swap",
-  "version": "0.9.1",
-    "description": "Auto text replacer. Use Buckeye/xkcd/other bundles or create custom rules. Perfect for Buckeye fans & others!",
+  "name": "Chrome Extension Template",
+  "version": "0.0.1",
+  "description": "A template for building Chrome extensions with Sentry and GA4 integrations.",
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting",
-    "offscreen",
-    "alarms"
+    "alarms",
+    "offscreen"
   ],
   "icons": {
     "48": "icons/icon-48.png",
@@ -25,41 +23,16 @@
   },
   "offscreen": {
     "pages": [
-      "offscreen.html"
+      "offscreen.html" 
     ],
     "reasons": [
       "BLOBS"
     ],
-    "justification": "Needed to run Sentry SDK and send GA4 events from the service worker."
+    "justification": "Needed to run Sentry SDK and send GA4 events from the service worker." 
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self';",
     "worker-src": "'self'"
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "run_at": "document_idle"
-    }
-  ],
-  "options_page": "options.html",
-  "host_permissions": [
-     "<all_urls>"
-   ],
-   "web_accessible_resources": [
-    {
-      "resources": [
-        "bundles/*.json"
-      ],
-      "matches": [
-        "<all_urls>"
-      ],
-      "use_dynamic_url": false
-    }
-  ]
+  "options_page": "options.html"
 }

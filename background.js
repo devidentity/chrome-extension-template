@@ -3,11 +3,8 @@
 
 /**
  * background.js (Offscreen Document Sentry & GA4 Handler)
- * Manages extension state and logic. Uses an Offscreen Document
- * to delegate Sentry error reporting and GA4 event sending.
  * Manages GA4 client/session IDs using chrome.storage.local.
- * Includes GA4 lifecycle event tracking (install/update).
- * Handles GA4 page view and core action tracking requests from UI scripts.
+ * Handles GA4 page view and event tracking requests from UI scripts.
  * Includes periodic alarm for sending rule/usage statistics.
  * Uses chrome.storage.sync ONLY for isLicensed, others use chrome.storage.local.
  * Loads pre-loaded bundles from /bundles/ directory on install/update.
@@ -20,20 +17,8 @@ const SESSION_EXPIRATION_MINUTES = 30; // GA4 session timeout
 let creatingOffscreenPromise = null;
 let keepAliveIntervalId = null;
 
-// --- Added: Alarm Configuration ---
-const RULE_STATS_ALARM_NAME = 'ruleStatsAlarm';
-const RULE_STATS_ALARM_PERIOD_MINUTES = 1440; // Daily
-
-// --- Added: Preloaded Bundle Configuration ---
-// List of bundle filenames located in the /bundles/ directory
-const PRELOADED_BUNDLE_FILES = [
-    'xkcd-substitutions-series.json', // Updated filename
-    'xkcd-substitutions-series-wavy.json', // Added wavy version
-    'xkcd-others.json', // Added others file
-    'cfb-top15-rivalries.json', // Added new CFB Rivalries bundle
-    'english-is-hard.json' // Added new English is hard bundle
-];
-
+// --- Periodic Alarm Configuration ---
+const GENERIC_ALARM_NAME = 'genericAlarm'; // Renamed from RULE_STATS_ALARM_NAME
 
 // --- Utility Functions ---
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -154,7 +139,7 @@ async function setupOffscreenDocument() {
   creatingOffscreenPromise = chrome.offscreen.createDocument({
     url: OFFSCREEN_DOCUMENT_PATH,
     reasons: [chrome.offscreen.Reason.BLOBS], // Reason required by Chrome API.
-    justification: 'Delegate Sentry error reporting and GA4 event sending to avoid service worker limitations.' // Justification required.
+    justification: 'Delegate Sentry error reporting and GA4 event sending from the service worker to avoid its limitations.' // Justification required.
   });
 
   try {
@@ -212,6 +197,10 @@ function stopKeepAlivePing() {
 }
 
 // Attempt initial setup shortly after the background script loads.
+// It's good practice to ensure the offscreen document is ready
+// soon after the service worker starts, especially if it's needed
+// for early events like 'extension_installed' or error handling
+// during initialization.
 // Use a small delay to allow other initialization tasks to potentially complete.
 setTimeout(setupOffscreenDocument, 1500);
 
@@ -235,7 +224,7 @@ async function reportErrorToSentry(error, context = {}) {
   console.log("Background: reportErrorToSentry invoked for error:", error?.message);
   let errorData;
   try {
-    // Ensure the offscreen document is ready.
+    // Ensure the offscreen document is ready before attempting to message it.
     await setupOffscreenDocument();
     await delay(200); // Small delay to allow document setup/messaging channel to stabilize.
 
@@ -247,7 +236,7 @@ async function reportErrorToSentry(error, context = {}) {
       context: context, // Include any additional context provided.
       appVersion: manifestVersion // Include extension version.
     };
-
+    // Note: console.log messages here might not appear reliably if service worker is shutting down.
     console.log("Background: Attempting to send error message to offscreen:", errorData.message);
     // Send the error payload to the offscreen document.
     await chrome.runtime.sendMessage({
@@ -271,7 +260,7 @@ async function reportMessageToSentry(messageText) {
    try {
      // Ensure the offscreen document is ready.
      await setupOffscreenDocument();
-     await delay(200); // Small delay.
+     await delay(200); // Small delay to allow document setup.
 
      console.log("Background: Attempting to send simple message to offscreen:", messageText);
      // Send the message payload.
@@ -307,7 +296,7 @@ async function reportGaEvent(eventName, eventParams = {}) {
 
         // Ensure the offscreen document is ready.
         await setupOffscreenDocument();
-        await delay(200); // Small delay.
+        await delay(200); // Small delay to allow document setup.
 
         console.log(`Background: Attempting to send GA4 event '${eventName}' to offscreen.`);
         // Send the event data, including IDs, to the offscreen document.
@@ -364,57 +353,36 @@ self.onunhandledrejection = (event) => {
 // Default settings definitions, separated by storage area
 const defaultSyncSettings = {
     isLicensed: false
-};
+}; // Added closing brace for defaultSyncSettings
 
-const defaultLocalSettings = {
+const defaultLocalSettings = { // Corrected placement
     isEnabled: true,
     domainList: {
-        // *** UPDATED DEFAULT VALUE ***
-        type: 'blacklist', // Reverted to blacklist
+        type: 'blacklist',
         domains: [
-            // *** UPDATED DOMAIN LIST ***
             'docs.google.com',
-            '/.*\\.github\\.io/' // Regex for github pages
+            '/.*\\.github\\.io/' // Regex example
         ]
     },
     ruleBundles: [
-      {
-        id: 'default_buckeye', // Unique ID for this bundle
-        name: 'Go Buckeyes!', // User-facing name - UPDATED NAME
-        isDefault: true, // Flag indicating it's the primary default bundle
-        source: 'hardcoded', // Indicates origin
-        requiresLicense: false, // This primary default bundle is free
-        rules: [ // The actual rules for this bundle
-          // Note: Removed 'isDefault' from individual rules
-          { id: 'default_TTUN_long', description: "Beat TTUN (Long Name)", find: 'University of Michigan', replace: 'TTUN', css: 'color: #BB0000; font-weight: bold;', isRegex: false, isCaseSensitive: false, isWholeWord: true, domainList: { type: 'inherit', domains: [] } },
-          { id: 'default_TTUN_short', description: "Beat TTUN (Short Name)", find: 'Michigan', replace: 'TTUN', css: 'color: #BB0000; font-weight: bold;', isRegex: false, isCaseSensitive: false, isWholeWord: true, domainList: { type: 'inherit', domains: [] } },
-          { id: 'default_m', description: "Go Buckeyes! Beat xichigan.", find: 'm', replace: 'x', css: 'color: #BB0000; font-weight: bold;', isRegex: false, isCaseSensitive: true, isWholeWord: false, domainList: { type: 'inherit', domains: [] } },
-          { id: 'default_M', description: "Go Buckeyes! Beat Xichigan.", find: 'M', replace: 'X', css: 'color: #BB0000; font-weight: bold;', isRegex: false, isCaseSensitive: true, isWholeWord: false, domainList: { type: 'inherit', domains: [] } }
-        ]
-      }
-    ],
-    activeBundleId: 'default_buckeye', // ID of the bundle active by default
+    ], // Empty array for template
+    activeBundleId: null, // No default active bundle in template
     disabledRuleIds: [] // Store as array for JSON compatibility
 };
 
-
-// Placeholder for license validation logic. Replace with actual validation.
-const TEST_LICENSE_KEY = "03-MAY-2025";
+// Basic placeholder license validation logic.
 async function validateLicenseKey(key) {
   console.log(`Simulating validation for key: ${key}`);
-  try {
     // Simulate network delay.
     await new Promise(resolve => setTimeout(resolve, 500));
-    // Simple check against a test key.
-    return key === TEST_LICENSE_KEY;
+    // Placeholder: Replace with actual license validation logic
+    // For template, just simulate a valid key
+    return key === 'TEST_LICENSE_KEY_VALID';
   } catch (error) {
-    console.error("Error during license validation simulation:", error);
     // Report simulation errors to Sentry if they occur.
     reportErrorToSentry(error, { function: 'validateLicenseKey', licenseKeyAttempt: key });
-    throw error; // Re-throw to be handled by caller.
+    return false; // Indicate failure
   }
-}
-
 // --- Saving Functions (Directly call storage APIs) ---
 // Note: Debouncing is removed here as saving is less frequent and handled by UI scripts now.
 // Background only saves on install/update and license validation.
@@ -425,6 +393,7 @@ async function validateLicenseKey(key) {
  * @returns {Promise<void>}
  */
 async function saveSyncSettings(settingsToSave) {
+    // Filter to only save keys defined in defaultSyncSettings to prevent unexpected writes
     const filteredSettings = {};
     if (settingsToSave.hasOwnProperty('isLicensed')) {
         filteredSettings.isLicensed = settingsToSave.isLicensed;
@@ -441,7 +410,6 @@ async function saveSyncSettings(settingsToSave) {
     } catch (error) {
         console.error("Error saving sync settings:", error);
         reportErrorToSentry(new Error(`Sync storage error: ${error.message}`), { context: 'saveSyncSettings', keys: Object.keys(filteredSettings) });
-        // Re-throw or handle as needed
         throw error;
     }
 }
@@ -452,6 +420,7 @@ async function saveSyncSettings(settingsToSave) {
  * @returns {Promise<void>}
  */
 async function saveLocalSettings(settingsToSave) {
+    // Filter to only save keys defined in defaultLocalSettings
     const localKeys = ['isEnabled', 'domainList', 'ruleBundles', 'activeBundleId', 'disabledRuleIds'];
     const filteredSettings = {};
     let settingsChanged = false;
@@ -471,12 +440,11 @@ async function saveLocalSettings(settingsToSave) {
     try {
         await chrome.storage.local.set(filteredSettings);
         console.log("Local settings saved.", filteredSettings);
-        // Notify content scripts about the changes as these affect replacements directly
+        // Notify content scripts about the changes
         notifyContentScriptSettingsChanged();
     } catch (error) {
         console.error("Error saving local settings:", error);
         reportErrorToSentry(new Error(`Local storage error: ${error.message}`), { context: 'saveLocalSettings', keys: Object.keys(filteredSettings) });
-        // Re-throw or handle as needed
         throw error;
     }
 }
@@ -488,7 +456,7 @@ function notifyContentScriptSettingsChanged() {
         tabs.forEach(tab => {
             // Ensure the tab has an ID before trying to send a message
             if (tab.id) {
-                chrome.tabs.sendMessage(tab.id, { action: "settingsUpdated" }, response => {
+                chrome.tabs.sendMessage(tab.id, { type: "settingsUpdated" }, response => { // Changed action to type for consistency
                     // Check for lastError to avoid console spam if content script isn't injected/listening
                     if (chrome.runtime.lastError) {
                         // Common error: "Receiving end does not exist" - safe to ignore.
@@ -499,130 +467,26 @@ function notifyContentScriptSettingsChanged() {
     });
 }
 
-// --- Added: Preloaded Bundle Processing ---
-
-/**
- * Fetches, processes, and adds preloaded bundles from the /bundles/ directory
- * to local storage if they don't already exist based on name and source.
- */
-async function processPreloadedBundles() {
-    console.log("Background: Processing preloaded bundles...");
-    let currentStorage;
-    try {
-        currentStorage = await chrome.storage.local.get('ruleBundles');
-    } catch (error) {
-        console.error("Background: Error fetching current bundles for preloading:", error);
-        reportErrorToSentry(error, { context: 'processPreloadedBundles - initial get' });
-        return; // Cannot proceed without current state
-    }
-
-    const existingBundles = currentStorage?.ruleBundles || [];
-    const bundlesToAdd = [];
-
-    for (const filename of PRELOADED_BUNDLE_FILES) {
-        const bundleUrl = chrome.runtime.getURL(`bundles/${filename}`);
-        console.log(`Background: Attempting to fetch preloaded bundle: ${bundleUrl}`); // Log the URL
-        try {
-            const response = await fetch(bundleUrl);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch ${filename}: ${response.statusText}`);
-            }
-
-            const bundleDataArray = await response.json(); // Assume file contains an array of bundles
-
-            // Process each bundle defined within the file
-            for (const bundleData of bundleDataArray) {
-                 if (!bundleData || typeof bundleData.name !== 'string' || !Array.isArray(bundleData.rules)) {
-                     console.warn(`Background: Skipping invalid bundle structure at index ${bundleDataArray.indexOf(bundleData)} in file ${filename}.`);
-                     continue;
-                 }
-
-                 // Check if a bundle with the same name and 'preloaded' source already exists
-                 const alreadyExists = existingBundles.some(
-                     b => b.name === bundleData.name && b.source === 'preloaded'
-                 );
-
-                 if (!alreadyExists) {
-                     console.log(`Background: Preparing to add preloaded bundle: ${bundleData.name}`);
-                     // Sanitize rules and generate new IDs
-                     const processedRules = bundleData.rules.map(rule => ({
-                         description: rule.description || '',
-                         find: rule.find || '',
-                         replace: rule.replace || '',
-                         css: rule.css || '',
-                         isRegex: rule.isRegex || false,
-                         isCaseSensitive: rule.isCaseSensitive || false,
-                         isWholeWord: rule.isWholeWord || false,
-                         // Safely handle domainList, defaulting if missing or invalid
-                         domainList: (rule.domainList && typeof rule.domainList === 'object' && Array.isArray(rule.domainList.domains))
-                             ? { type: rule.domainList.type || 'inherit', domains: rule.domainList.domains.map(d => String(d)) }
-                             : { type: 'inherit', domains: [] },
-                         id: generateUuid() // Generate unique ID for each rule
-                         // Note: Explicitly ignoring rule.isDefault if present in the import file
-                     }));
-
-                     // Create the new bundle object for storage
-                     const newBundle = {
-                         id: generateUuid(), // Generate unique ID for the bundle
-                         name: bundleData.name,
-                         isDefault: false, // Never default
-                         source: 'preloaded', // Mark as preloaded
-                         // Read requiresLicense from file, default to false if missing or not boolean
-                         requiresLicense: typeof bundleData.requiresLicense === 'boolean' ? bundleData.requiresLicense : false,
-                         rules: processedRules
-                         // Note: Explicitly ignoring bundle.id, bundle.isDefault, bundle.source, bundle.requiresLicense
-                         // if present in the import file, as we are creating a new user bundle.
-                     };
-                     bundlesToAdd.push(newBundle);
-                 } else {
-                      console.log(`Background: Preloaded bundle "${bundleData.name}" already exists. Skipping.`);
-                 }
-            } // End loop through bundles in file
-
-        } catch (error) {
-            console.error(`Background: Error processing preloaded bundle file ${filename}:`, error);
-            reportErrorToSentry(error, { context: 'processPreloadedBundles', filename: filename });
-        }
-    } // End loop through filenames
-
-    // If new bundles were found, save them
-    if (bundlesToAdd.length > 0) {
-        console.log(`Background: Adding ${bundlesToAdd.length} new preloaded bundle(s) to storage.`);
-        const combinedBundles = [...existingBundles, ...bundlesToAdd];
-        try {
-            // Use saveLocalSettings to save the updated array and notify content scripts
-            await saveLocalSettings({ ruleBundles: combinedBundles });
-            console.log("Background: Successfully saved updated bundles including preloaded ones.");
-        } catch (error) {
-             console.error("Background: Error saving combined bundles after preloading:", error);
-             // Error already reported by saveLocalSettings
-        }
-    } else {
-        console.log("Background: No new preloaded bundles to add.");
-    }
-}
-
-
 // --- Installation / Update / Startup Handler ---
 
 /** Creates the periodic alarm for sending stats if it doesn't exist */
-async function createStatsAlarm() {
+async function ensurePeriodicAlarm() { // Renamed for clarity - ensures it exists or creates
     try {
-        const alarm = await chrome.alarms.get(RULE_STATS_ALARM_NAME);
+        const alarm = await chrome.alarms.get(GENERIC_ALARM_NAME);
         if (!alarm) {
-            chrome.alarms.create(RULE_STATS_ALARM_NAME, {
-                periodInMinutes: RULE_STATS_ALARM_PERIOD_MINUTES,
+            chrome.alarms.create(GENERIC_ALARM_NAME, {
+                periodInMinutes: 1440, // Daily - example period
                 delayInMinutes: 5 // Optional: Delay first run slightly after install/startup
             });
-            console.log(`Background: Created daily alarm '${RULE_STATS_ALARM_NAME}'.`);
+            console.log(`Background: Created daily alarm '${GENERIC_ALARM_NAME}'.`);
         } else {
-            console.log(`Background: Alarm '${RULE_STATS_ALARM_NAME}' already exists.`);
+            console.log(`Background: Alarm '${GENERIC_ALARM_NAME}' already exists.`);
         }
     } catch (error) {
-        console.error(`Background: Error creating alarm '${RULE_STATS_ALARM_NAME}':`, error);
+        console.error(`Background: Error creating alarm '${GENERIC_ALARM_NAME}':`, error);
         reportErrorToSentry(error, { context: 'createStatsAlarm' });
-    }
 }
+} // Corrected function closing brace
 
 // Run alarm creation on startup
 createStatsAlarm();
@@ -635,22 +499,21 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // Handle first installation.
     if (details.reason === 'install') {
         console.log("Background: Reason is 'install'. Applying default settings.");
+        // Send GA4 install event BEFORE applying settings to potentially capture early errors
+        reportGaEvent('extension_installed', { install_reason: details.reason });
 
         // Set sync defaults
         await chrome.storage.sync.set(defaultSyncSettings);
         console.log("Default sync settings applied.");
 
-        // Set local defaults
+        // Set local defaults. Handle potential errors during storage ops.
         await chrome.storage.local.set(defaultLocalSettings);
         console.log("Default local settings applied.");
 
-        // Load preloaded bundles AFTER defaults are set
-        await processPreloadedBundles();
+        // Ensure the alarm is created on install.
+        await ensurePeriodicAlarm();
 
-        // *** Send GA4 install event AFTER settings and preloads are done ***
-        reportGaEvent('extension_installed', { install_reason: details.reason });
-        // Create the stats alarm on first install
-        createStatsAlarm();
+        // Process preloaded bundles on first install
     }
     // Handle extension updates.
     else if (details.reason === 'update') {
@@ -661,8 +524,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             update_reason: details.reason,
             previous_version: previousVersion
         });
-        // Ensure alarm exists after update
-        createStatsAlarm();
+        // Ensure alarm exists after update.
+        await ensurePeriodicAlarm();
 
         // Check and apply defaults if missing (handles migration to split storage)
         const syncKeysToCheck = Object.keys(defaultSyncSettings);
@@ -683,6 +546,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         const currentLocal = await chrome.storage.local.get(localKeysToCheck);
         const localToSet = {};
         for (const key of localKeysToCheck) {
+            // Check if the key is missing in local storage.
             if (currentLocal[key] === undefined) {
                  // Special handling: If ruleBundles exists in sync but not local (migration case)
                  if (key === 'ruleBundles') {
@@ -708,21 +572,19 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         // Load/update preloaded bundles on update as well
         await processPreloadedBundles();
 
-    }
+    } // Corrected else if block closing brace
     // Handle browser updates or Chrome updates (usually less critical for tracking).
     else if (details.reason === 'chrome_update' || details.reason === 'shared_module_update') {
          console.log(`Background: onInstalled reason: ${details.reason}. No specific action taken.`);
          // Optionally, you could send a generic 'browser_updated' event if useful.
          // reportGaEvent('browser_updated', { update_reason: details.reason });
          // Ensure alarm exists after these updates too
-         createStatsAlarm();
-         // Process preloads just in case storage was cleared or corrupted
-         await processPreloadedBundles();
-    }
+         await ensurePeriodicAlarm();
     // Log any other unexpected reasons.
     else {
          console.log("Background: onInstalled - Unhandled reason:", details.reason);
          // Process preloads here too as a fallback
+         await ensurePeriodicAlarm(); // Ensure alarm is set for any unhandled reason
          await processPreloadedBundles();
     }
 
@@ -742,10 +604,10 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 
 // --- Alarm Listener for Periodic Stats ---
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-    if (alarm.name === RULE_STATS_ALARM_NAME) {
-        console.log(`Background: Alarm '${RULE_STATS_ALARM_NAME}' triggered. Collecting stats...`);
+    if (alarm.name === GENERIC_ALARM_NAME) {
+        console.log(`Background: Alarm '${GENERIC_ALARM_NAME}' triggered. Example periodic task...`);
         try {
-            // Load necessary settings from storage - fetch from correct areas
+            // Fetch necessary settings for the stats event.
             const syncSettings = await chrome.storage.sync.get(['isLicensed']);
             const localSettings = await chrome.storage.local.get(['isEnabled', 'domainList', 'ruleBundles']);
 
@@ -756,69 +618,17 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
                 throw new Error(`Storage read error: ${chrome.runtime.lastError.message}`);
             }
 
-            // Combine settings, giving priority to loaded values over defaults if needed
+            // Combine loaded settings with defaults for reporting.
             const currentIsLicensed = syncSettings?.isLicensed ?? defaultSyncSettings.isLicensed;
             const currentIsEnabled = localSettings?.isEnabled ?? defaultLocalSettings.isEnabled;
             const currentDomainList = localSettings?.domainList ?? defaultLocalSettings.domainList;
             const currentBundles = localSettings?.ruleBundles ?? defaultLocalSettings.ruleBundles;
 
-
-            // --- Calculate Stats ---
-            const bundles = currentBundles; // Use loaded/defaulted bundles
-            const bundleCount = bundles.length;
-            let totalRules = 0;
-            let customBundleCount = 0; // Bundles with source: 'user'
-            let preloadedBundleCount = 0; // Bundles with source: 'preloaded'
-            let hardcodedBundleCount = 0; // Bundles with source: 'hardcoded' (should be 1)
-            const ruleCountsPerBundle = [];
-
-            bundles.forEach(bundle => {
-                const count = bundle.rules?.length || 0;
-                totalRules += count;
-                ruleCountsPerBundle.push(count);
-                if (bundle.source === 'user') {
-                    customBundleCount++;
-                } else if (bundle.source === 'preloaded') {
-                    preloadedBundleCount++;
-                } else if (bundle.source === 'hardcoded') {
-                    hardcodedBundleCount++;
-                }
-            });
-
-            let maxRules = 0;
-            let minRules = 0;
-            let meanRules = 0;
-            let medianRules = 0;
-
-            if (bundleCount > 0) {
-                ruleCountsPerBundle.sort((a, b) => a - b); // Sort for median calculation
-                maxRules = ruleCountsPerBundle[bundleCount - 1] ?? 0; // Handle empty array case
-                minRules = ruleCountsPerBundle[0] ?? 0; // Handle empty array case
-                meanRules = totalRules / bundleCount;
-
-                // Calculate median
-                const mid = Math.floor(bundleCount / 2);
-                if (bundleCount % 2 === 0 && bundleCount > 0) { // Even number of bundles
-                    medianRules = ((ruleCountsPerBundle[mid - 1] ?? 0) + (ruleCountsPerBundle[mid] ?? 0)) / 2;
-                } else if (bundleCount % 2 !== 0) { // Odd number of bundles
-                    medianRules = ruleCountsPerBundle[mid] ?? 0;
-                }
-            }
-
             // --- Prepare GA4 Event Parameters ---
-            const statsParams = {
+            const statsParams = { // Renamed variable for clarity
                 is_enabled: currentIsEnabled,
                 is_licensed: currentIsLicensed,
                 global_domain_filter_type: currentDomainList?.type || 'disabled',
-                bundle_count_total: bundleCount,
-                bundle_count_custom: customBundleCount,
-                bundle_count_preloaded: preloadedBundleCount,
-                bundle_count_hardcoded: hardcodedBundleCount,
-                rule_count_total: totalRules,
-                rule_count_max: maxRules,
-                rule_count_min: minRules,
-                rule_count_mean: parseFloat(meanRules.toFixed(2)) || 0, // Ensure NaN becomes 0
-                rule_count_median: medianRules
             };
 
             console.log("Background: Calculated stats:", statsParams);
@@ -827,8 +637,8 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
             await reportGaEvent('rule_bundle_stats', statsParams);
             console.log("Background: Sent rule_bundle_stats event.");
 
-        } catch (error) {
-            console.error(`Background: Error during alarm '${RULE_STATS_ALARM_NAME}':`, error);
+         } catch (error) {
+            console.error(`Background: Error during alarm '${GENERIC_ALARM_NAME}':`, error); // Use GENERIC_ALARM_NAME
             reportErrorToSentry(error, { context: 'onAlarmHandler', alarmName: RULE_STATS_ALARM_NAME });
         }
     }
@@ -838,7 +648,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
 // --- Message Listener for Inter-component Communication ---
 // Handles messages from popup.js, options.js, or content scripts.
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  // Handle license validation requests from options.js.
+  // Handle license validation requests (typically from options.js).
   if (request.action === "validateLicense") {
     validateLicenseKey(request.key)
       .then(isValid => {
@@ -854,11 +664,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           // Log the error and send failure response back.
           console.error("License validation failed:", error);
           reportErrorToSentry(error, { context: 'validateLicense message handler' }); // Report validation errors
-          sendResponse({ success: false, error: error.message || 'Validation failed' });
+          sendResponse({ success: false, error: error?.message || 'Validation failed' });
       });
     // Return true to indicate asynchronous response.
     return true; // Indicate async response for validateLicense
-  }
+} // Corrected closing brace for validateLicense handler
 
   // Handle Generic GA4 Event tracking requests
   if (request.action === "trackGaEvent" && request.payload?.eventName) {
@@ -882,7 +692,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
        console.log("Background: Received reportError request.");
        const { source, message, error: errorDetails, context } = request.payload;
        const errorToReport = new Error(errorDetails?.message || message || 'Unknown error from UI');
-       if(errorDetails?.name) errorToReport.name = errorDetails.name;
+       if (errorDetails?.name) errorToReport.name = errorDetails.name; // Corrected conditional assignment
        // No need to await here
        reportErrorToSentry(errorToReport, { source, ...context });
        sendResponse({ success: true });
@@ -890,9 +700,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
    }
 
 
+    // Handle GA4 Page View tracking requests (typically from popup.js or options.js)
+    if (request.action === "trackPageView" && request.payload?.pagePath) {
+        const pagePath = request.payload.pagePath;
+        const pageTitle = request.payload.pageTitle || pagePath; // Use path as title if none provided
+        console.log(`Background: Received trackPageView request for: ${pagePath}`);
+
+        // Use the existing reportGaEvent function for page views.
+        // GA4 page views are just events with specific parameters ('page_view' event name).
+        reportGaEvent('page_view', {
+            page_path: pagePath,
+            page_title: pageTitle,
+            // Add other relevant page view parameters if needed
+            // For example: screen_resolution, viewport_size etc.
+            // Refer to GA4 Measurement Protocol documentation for standard parameters.
+        });
+
+        sendResponse({ success: true, message: `GA page view ${pagePath} queued.` });
+        return false; // Synchronous response
+    }
+
   // Return false if the message is not handled here or response is synchronous.
   // This allows other listeners (like the one in offscreen.js) to potentially handle the message.
   return false;
 });
-
 console.log("Scarlet Swap background script loaded (Sentry & GA4 Offscreen enabled). Storage split implemented. Preload logic added.");
